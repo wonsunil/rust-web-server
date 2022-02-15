@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <title>Index Page</title>
     <link rel="stylesheet" href="/css/index">
+    <script>
+        fetch("/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                test: "test",
+                test2: "test2"
+            })
+        });
+    </script>
 </head>
 <body>
     Hello, World!

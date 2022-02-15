@@ -1,6 +1,7 @@
 use std::io::{ Read, };
 use std::net::{ TcpListener, TcpStream };
 use std::str::SplitWhitespace;
+use regex::Regex;
 
 mod logger;
 
@@ -41,13 +42,23 @@ fn main() {
         let request = String::from_utf8_lossy(&buffer[..]);
         let request_line = request.lines().next().unwrap();
         let mut request_type = "Request";
+        let mut data = "";
 
         for header in request.split("\n") {
             let mut header = header.split(": ");
+            let header_info: &str = header.nth(0).unwrap();
 
-            if header.nth(0).unwrap() == "Content-Type" {
+            if header_info == "Content-Type" {
                 request_type = "Json Request";
-            }
+            };
+            if header_info == "Content-Length" {
+                let regex = Regex::new(r#"\{[a-zA-Z0-9":,]*\}*"#).unwrap();
+                let result = regex.find(&request).unwrap();
+                let start = result.start();
+                let end = result.end();
+
+                data = &request[start..end];
+            };
         }
 
         let request_type = logger.bright_green().get_color_text(request_type);
@@ -57,11 +68,11 @@ fn main() {
         
         let parts = &mut request_line.split_whitespace();
         
-        handle_connection(stream, &mut route, parts);
+        handle_connection(stream, &mut route, request_type, parts, data);
     }
 }
 
-fn handle_connection(stream: TcpStream, route: &mut RouteStruct, parts: &mut SplitWhitespace) {
+fn handle_connection(stream: TcpStream, route: &mut RouteStruct, request_type: String, parts: &mut SplitWhitespace, data: &str) {
     let (mut logger, mut error_logger) = logger::new();
 
     match parts.next() {
@@ -72,7 +83,7 @@ fn handle_connection(stream: TcpStream, route: &mut RouteStruct, parts: &mut Spl
 
             match parts.next() {
                 Some(url) => {
-                    logger.log(&format!("   Url: {}", url));
+                    logger.log(&format!("   Request Url: {}", url));
 
                     if route.is_ignore_url(&url) {
                         logger.log("   \x1b[33mError:\x1b[0m \x1b[31mNot Allowed Request Url\x1b[0m");
@@ -81,7 +92,7 @@ fn handle_connection(stream: TcpStream, route: &mut RouteStruct, parts: &mut Spl
                         return;
                     };
 
-                    route.call_router(stream, method, url);
+                    route.call_router(stream, request_type, method, url, data);
                 },
                 None => {
                     logger.log("]");

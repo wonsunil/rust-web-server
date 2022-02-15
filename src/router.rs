@@ -7,6 +7,7 @@ use substring::Substring;
 
 use crate::method::*;
 use crate::logger;
+use crate::util::json;
 
 type Expr = Box<dyn Fn(String) -> String>;
 
@@ -124,7 +125,7 @@ impl RouteStruct{
         }
     }
 
-    pub fn call_router(&mut self, mut stream: TcpStream, method: Method, url: &str) {
+    pub fn call_router(&mut self, mut stream: TcpStream, _request_type: String, method: Method, url: &str, data: &str) {
         let (mut logger, mut error_logger) = logger::new();
         let response = self.find_router(&method, url);
 
@@ -134,7 +135,12 @@ impl RouteStruct{
     
                 logger.log(&format!("   Handler: {}", name));
     
-                let content = get_content_format(handler(url.to_string()));
+                let data = match data.len() {
+                    0 => url.to_string(),
+                    _ => data.to_string()
+                };
+
+                let content = get_content_format("public/view/".to_owned() + &handler(data) + ".html");
     
                 stream.write(content.as_bytes()).unwrap();
                 stream.flush().unwrap();
@@ -159,7 +165,7 @@ impl RouteStruct{
                                 println!("");
 
                                 return;
-                            }
+                            };
 
                             stream.write(content.as_bytes()).unwrap();
                             stream.flush().unwrap();
@@ -170,10 +176,10 @@ impl RouteStruct{
                         None => {
                             error_logger.log("Invalid css address");
                         }
-                    }
+                    };
 
                     return;
-                }
+                };
 
                 logger.log("   \x1b[33mError:\x1b[0m \x1b[31mNot Mapped Request Url\x1b[0m");
                 logger.log("]");
@@ -181,30 +187,13 @@ impl RouteStruct{
         }
     }
 
+    pub fn ignore(&mut self, url: &str) {
+        self.ignore_url.push(url.into());
+    }
+
     pub fn is_ignore_url(&mut self, url: &str) -> bool {
         self.ignore_url.contains(&url.to_string())
     }
-}
-
-pub fn main() -> RouteStruct {
-    let mut route = RouteStruct{
-        get_route: HashMap::new(),
-        post_route: HashMap::new(),
-        ignore_url: Vec::new()
-    };
-
-    route.add_router(Method::Get, "/", "main_handler", |_text| -> String { String::from("public/view/index.html") });
-    route.add_router(Method::Get, "/test", "test_handler", |_text| -> String { String::from("public/view/test.html") });
-    route.add_router(Method::Get, "/user/:userId", "user_test_handler", |text| -> String {
-        println!("   Request Parameter: {}", text);
-        String::from("public/view/profile.html")
-    });
-
-    route.add_router(Method::Get, "/css", "css_handler", |url| url);
-
-    route.ignore_url.push(String::from("/favicon.ico"));
-
-    route
 }
 
 fn get_content_format(view_name: String) -> String {
@@ -227,4 +216,32 @@ fn get_content_format(view_name: String) -> String {
             String::from("Error")
         }
     }
+}
+
+pub fn main() -> RouteStruct {
+    let mut route = RouteStruct{
+        get_route: HashMap::new(),
+        post_route: HashMap::new(),
+        ignore_url: Vec::new()
+    };
+
+    route.add_router(Method::Get, "/", "main_handler", |_text| -> String { String::from("index") });
+    route.add_router(Method::Get, "/test", "test_handler", |_text| -> String { String::from("test") });
+    route.add_router(Method::Get, "/user/:userId", "user_test_handler", |text| -> String {
+        println!("   Request Parameter: {}", text);
+        String::from("profile")
+    });
+
+    route.add_router(Method::Post, "/", "main_post_handler", |text| -> String {
+        let data: HashMap<String, String> = json::parse(&text);
+        println!("   Request Data: {:?}", data);
+        String::from("index")
+    });
+
+    //css, js router
+    route.add_router(Method::Get, "/css", "css_handler", |url| url);
+
+    route.ignore("/favicon.ico");
+
+    route
 }
