@@ -53,6 +53,7 @@ fn main() {
         let color_request_type = logger.bright_green().get_color_text(request_type);
         let color_text = logger.yellow().get_color_text("[");
 
+        println!("");
         logger.log(&format!("{} {}", color_request_type, color_text));
         
         let parts = &mut request_line.split_whitespace();

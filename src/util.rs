@@ -1,3 +1,5 @@
+// use std::any::type_name;
+
 pub mod cmd;
 pub mod json;
 
@@ -10,3 +12,7 @@ pub fn replace(target_string: String, change_string: Vec<&str>, replace_string: 
 
     new_string
 }
+
+// pub fn type_of<T>(_: T) -> &'static str {
+//     type_name::<T>()
+// }

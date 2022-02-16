@@ -83,10 +83,10 @@ impl RouteStruct{
                                     };
     
                                     return result;   
-                                }
+                                };
                             },
                             None => {
-
+                                
                             }
                         }
 
@@ -139,7 +139,6 @@ impl RouteStruct{
                     0 => url.to_string(),
                     _ => data.to_string()
                 };
-
                 
                 if request_type == "Request" {
                     let content = get_content_format("public/view/".to_owned() + &handler(data) + ".html");
@@ -159,7 +158,6 @@ impl RouteStruct{
                 stream.flush().unwrap();
 
                 logger.log("]");
-                println!("");
             },
             None => {
                 let css_request_regex = Regex::new("/css/[a-zA-Z]*").unwrap();
@@ -252,7 +250,11 @@ pub fn main() -> RouteStruct {
         let data: HashMap<String, String> = json::parse(&text);
         logger.log(&format!("   Request Params: {:?}", data));
 
-        "{\"status\": \"success\", \"test\": \"test-success\"}".into()
+        let mut map: HashMap<&str, &str> = HashMap::new();
+        map.insert("status", "success");
+        map.insert("message", "test-success");
+
+        json::stringify(map)
     });
 
     //css, js router
