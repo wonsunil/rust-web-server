@@ -125,7 +125,7 @@ impl RouteStruct{
         }
     }
 
-    pub fn call_router(&mut self, mut stream: TcpStream, _request_type: String, method: Method, url: &str, data: &str) {
+    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str) {
         let (mut logger, mut error_logger) = logger::new();
         let response = self.find_router(&method, url);
 
@@ -140,9 +140,22 @@ impl RouteStruct{
                     _ => data.to_string()
                 };
 
-                let content = get_content_format("public/view/".to_owned() + &handler(data) + ".html");
-    
-                stream.write(content.as_bytes()).unwrap();
+                
+                if request_type == "Request" {
+                    let content = get_content_format("public/view/".to_owned() + &handler(data) + ".html");
+
+                    stream.write(content.as_bytes()).unwrap();
+                }else {
+                    let contents = handler(data);
+                    let content = format!(
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                        contents.len(),
+                        contents
+                    );
+
+                    stream.write(content.as_bytes()).unwrap();
+                };
+
                 stream.flush().unwrap();
 
                 logger.log("]");
@@ -233,9 +246,11 @@ pub fn main() -> RouteStruct {
     });
 
     route.add_router(Method::Post, "/", "main_post_handler", |text| -> String {
+        let (mut logger, _) = logger::new();
         let data: HashMap<String, String> = json::parse(&text);
-        println!("   Request Data: {:?}", data);
-        String::from("index")
+        logger.log(&format!("   Request Params: {:?}", data));
+
+        "{\"status\": \"success\", \"test\": \"test-success\"}".into()
     });
 
     //css, js router

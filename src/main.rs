@@ -61,14 +61,14 @@ fn main() {
             };
         }
 
-        let request_type = logger.bright_green().get_color_text(request_type);
+        let color_request_type = logger.bright_green().get_color_text(request_type);
         let color_text = logger.yellow().get_color_text("[");
 
-        logger.log(&format!("{} {}", request_type, color_text));
+        logger.log(&format!("{} {}", color_request_type, color_text));
         
         let parts = &mut request_line.split_whitespace();
         
-        handle_connection(stream, &mut route, request_type, parts, data);
+        handle_connection(stream, &mut route, request_type.to_string(), parts, data);
     }
 }
 

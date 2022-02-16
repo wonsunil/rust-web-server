@@ -5,19 +5,30 @@
     <title>Index Page</title>
     <link rel="stylesheet" href="/css/index">
     <script>
-        fetch("/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                test: "test",
-                test2: "test2"
-            })
-        });
+        window.onload = () => {
+            const $testButton = document.querySelector("#test");
+            $testButton.addEventListener("click", () => {
+                fetch("/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        test: "test",
+                        test2: "test2"
+                    })
+                })
+                .then(req => req.json())
+                .then(res => {
+                    console.log(res);
+                });
+            });
+        };
     </script>
 </head>
 <body>
     Hello, World!
+
+    <button id="test">test</button>
 </body>
 </html>
