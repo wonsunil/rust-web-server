@@ -238,6 +238,7 @@ pub fn main() -> RouteStruct {
         ignore_url: Vec::new()
     };
 
+    //default router
     route.add_router(Method::Get, "/", "main_handler", |_text| -> String { String::from("index") });
     route.add_router(Method::Get, "/test", "test_handler", |_text| -> String { String::from("test") });
     route.add_router(Method::Get, "/user/:userId", "user_test_handler", |text| -> String {
@@ -245,6 +246,7 @@ pub fn main() -> RouteStruct {
         String::from("profile")
     });
 
+    //xhr, fetch router
     route.add_router(Method::Post, "/", "main_post_handler", |text| -> String {
         let (mut logger, _) = logger::new();
         let data: HashMap<String, String> = json::parse(&text);

@@ -20,17 +20,6 @@ fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
 
-    // let socket = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 3000);
-
-    // match mysql.stdin.unwrap().write("select * from user_info".as_bytes()) {
-    //     Ok(_) => {
-    //         println!("asdf");
-    //     },
-    //     Err(error) => {
-    //         println!("{}", error);
-    //     }
-    // };
-
     logger.yellow().log(&format!("Server is Established at port: {}", PORT));
 
     for stream in listener.incoming() {
