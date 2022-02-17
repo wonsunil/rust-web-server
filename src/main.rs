@@ -2,6 +2,8 @@ use std::io::{ Read, };
 use std::net::{ TcpListener, TcpStream };
 use std::str::SplitWhitespace;
 use regex::Regex;
+use mysql::*;
+use mysql::prelude::*;
 
 mod logger;
 
@@ -9,15 +11,19 @@ mod method;
 use method::*;
 
 mod router;
-use router::RouteStruct;
+use router::Router;
+
+mod controller;
 
 mod util;
 
+mod db;
+use db::connect::DataBaseAccess;
+
 fn main() {
     const PORT: i32 = 3000;
-    let mut route: RouteStruct = router::main();
+    let mut route: Router = Router::new();
     let (mut logger, _) = logger::new();
-
     let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
 
     logger.yellow().log(&format!("Server is Established at port: {}", PORT));
@@ -62,7 +68,7 @@ fn main() {
     }
 }
 
-fn handle_connection(stream: TcpStream, route: &mut RouteStruct, request_type: String, parts: &mut SplitWhitespace, data: &str) {
+fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String, parts: &mut SplitWhitespace, data: &str) {
     let (mut logger, mut error_logger) = logger::new();
 
     match parts.next() {

@@ -8,16 +8,17 @@ use substring::Substring;
 use crate::method::*;
 use crate::logger;
 use crate::util::json;
+use crate::controller::{ MainController, UserController };
 
 type Expr = Box<dyn Fn(String) -> String>;
 
-pub struct RouteStruct{
-    get_route: HashMap<String, (String, Expr)>,
-    post_route: HashMap<String, (String, Expr)>,
-    ignore_url: Vec<String>
+pub struct Router{
+    pub get_route: HashMap<String, (String, Expr)>,
+    pub post_route: HashMap<String, (String, Expr)>,
+    pub ignore_url: Vec<String>
 }
 
-impl RouteStruct{
+impl Router{
     pub fn add_router<H>(&mut self, method: Method, url: &str, name: &str, handler: H)
     where
         H: Fn(String) -> String + 'static
@@ -48,6 +49,8 @@ impl RouteStruct{
     }
 
     pub fn find_router(&mut self, method: &Method, url: &str) -> Option<&(String, Box<dyn Fn(String) -> String>)> {
+        let (mut logger, _) = logger::new();
+
         match method{
             Method::Get => {
                 let mut get_route = self.get_route.iter();
@@ -71,13 +74,19 @@ impl RouteStruct{
                                             true
                                         },
                                         None => {
-                                            println!("   Mapped Original Url {}", target_url);
+                                            logger.green().log(&format!("   Mapped Url is {}", target_url));
     
                                             let reg_url = target_url.replace(&target_url[start_index..], "[0-9a-zA-Z]");
                                             let regex: Regex = Regex::new(&reg_url).unwrap();
                                             
-                                            println!("   Generated Regex {}", regex);
+                                            println!("   Generated Regex: \x1b[33m[\x1b[0m\x1b[34m0\x1b[0m\x1b[33m-\x1b[0m\x1b[34m9\x1b[0m\x1b[34ma\x1b[0m\x1b[33m-\x1b[0m\x1b[34mz\x1b[0m\x1b[34mA\x1b[0m\x1b[33m-\x1b[0m\x1b[34mZ\x1b[0m\x1b[33m]\x1b[0m");
     
+                                            if regex.is_match(url) {
+                                                logger.green().log(&format!("   Pattern  {}  is match at {}", target_url, regex));
+                                            }else {
+                                                logger.green().log(&format!("   Pattern  {}  is not match at {}", target_url, regex));
+                                            }
+
                                             regex.is_match(url)
                                         }
                                     };
@@ -205,6 +214,33 @@ impl RouteStruct{
     pub fn is_ignore_url(&mut self, url: &str) -> bool {
         self.ignore_url.contains(&url.to_string())
     }
+
+    pub fn set(&mut self, controller: Router) {
+        controller.get_route.into_iter().for_each(|(url, t)| {
+            self.get_route.insert(url, t);
+        });
+        controller.post_route.into_iter().for_each(|(url, t)| {
+            self.post_route.insert(url, t);
+        });
+    }
+
+    pub fn new() -> Router {
+        let mut route = Router{
+            get_route: HashMap::new(),
+            post_route: HashMap::new(),
+            ignore_url: Vec::new()
+        };
+
+        route.set(MainController::new());
+        route.set(UserController::new());
+    
+        //css, js router
+        route.add_router(Method::Get, "/css", "css_handler", |url| url);
+    
+        route.ignore("/favicon.ico");
+    
+        route
+    }
 }
 
 fn get_content_format(view_name: String) -> String {
@@ -227,40 +263,4 @@ fn get_content_format(view_name: String) -> String {
             String::from("Error")
         }
     }
-}
-
-pub fn main() -> RouteStruct {
-    let mut route = RouteStruct{
-        get_route: HashMap::new(),
-        post_route: HashMap::new(),
-        ignore_url: Vec::new()
-    };
-
-    //default router
-    route.add_router(Method::Get, "/", "main_handler", |_text| -> String { String::from("index") });
-    route.add_router(Method::Get, "/test", "test_handler", |_text| -> String { String::from("test") });
-    route.add_router(Method::Get, "/user/:userId", "user_test_handler", |text| -> String {
-        println!("   Request Parameter: {}", text);
-        String::from("profile")
-    });
-
-    //xhr, fetch router
-    route.add_router(Method::Post, "/", "main_post_handler", |text| -> String {
-        let (mut logger, _) = logger::new();
-        let data: HashMap<String, String> = json::parse(&text);
-        logger.log(&format!("   Request Params: {:?}", data));
-
-        let mut map: HashMap<&str, &str> = HashMap::new();
-        map.insert("status", "success");
-        map.insert("message", "test-success");
-
-        json::stringify(map)
-    });
-
-    //css, js router
-    route.add_router(Method::Get, "/css", "css_handler", |url| url);
-
-    route.ignore("/favicon.ico");
-
-    route
 }
