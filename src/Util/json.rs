@@ -1,8 +1,32 @@
+use std::fmt;
 use std::collections::HashMap;
 
 use crate::util::{ replace };
 
-pub type Json = HashMap<String, String>;
+pub struct Json{
+    data: HashMap<String, String>
+}
+
+impl Json{
+    pub fn get(&self, key: &str) -> String {
+        match self.data.get(key.into()) {
+            Some(value) => value.into(),
+            None => "".into()
+        }
+    }
+}
+
+impl std::fmt::Debug for Json {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut data: HashMap<String, String> = HashMap::new();
+
+        self.data.iter().for_each(|(key, value)| {
+            data.insert(key.into(), value.into());
+        });
+        
+        write!(f, "{}", stringify(data))
+    }
+}
 
 pub fn parse(string_data: &str) -> Json {   
     let mut vec: Vec<&str> = Vec::new();
@@ -10,22 +34,25 @@ pub fn parse(string_data: &str) -> Json {
     vec.push("}");
     
     let target_data = replace(String::from(string_data), vec, "");
-    let mut data_map = HashMap::new();
+    let mut data_map: HashMap<String, String> = HashMap::new();
 
     for data in target_data.split(",") {
         let data: Vec<&str> = data.split(":").collect();
-        
-        let key = data[0];
-        let value = data[1];
+
+        let key = data[0].replace(r#"""#, "");
+        let value = data[1].replace(r#"""#, "");
 
         data_map.insert(key.into(), value.into());
     }
-    
-    data_map
+
+    Json{
+        data: data_map
+    }
 }
 
-pub fn stringify<T: std::fmt::Debug>(datas: HashMap<&str, T>) -> String
+pub fn stringify<S, T: std::fmt::Debug>(datas: HashMap<S, T>) -> String
 where
+    S: Into<String>,
     T: std::fmt::Display
 {
     let datas = datas.into_iter();
@@ -43,7 +70,7 @@ where
             };
 
             json_string.push_str(r#"""#);
-            json_string.push_str(key);
+            json_string += &key.into();
             json_string.push_str(r#"""#);
             json_string.push_str(":");
             json_string.push_str(r#"""#);

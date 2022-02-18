@@ -7,7 +7,6 @@ use substring::Substring;
 
 use crate::method::*;
 use crate::logger;
-use crate::util::json;
 use crate::controller::{ MainController, UserController };
 
 type Expr = Box<dyn Fn(String) -> String>;
@@ -64,9 +63,9 @@ impl Router{
                         match target_url.find(":") {
                             Some(index) => {
                                 let start_index = index;
-                                let end = target_url[6..].find("/");
+                                let end = target_url[start_index..].find("/");
 
-                                if url.starts_with(&target_url[..6]) {
+                                if url.starts_with(&target_url[..start_index]) {
                                     let result = match end {
                                         Some(end_index) => {
                                             println!("{}, {}, {}", target_url, start_index, end_index);
@@ -74,17 +73,16 @@ impl Router{
                                             true
                                         },
                                         None => {
-                                            logger.green().log(&format!("   Mapped Url is {}", target_url));
+                                            logger.green().log(&format!("   Mapped Url: {}", target_url));
     
                                             let reg_url = target_url.replace(&target_url[start_index..], "[0-9a-zA-Z]");
                                             let regex: Regex = Regex::new(&reg_url).unwrap();
                                             
-                                            println!("   Generated Regex: \x1b[33m[\x1b[0m\x1b[34m0\x1b[0m\x1b[33m-\x1b[0m\x1b[34m9\x1b[0m\x1b[34ma\x1b[0m\x1b[33m-\x1b[0m\x1b[34mz\x1b[0m\x1b[34mA\x1b[0m\x1b[33m-\x1b[0m\x1b[34mZ\x1b[0m\x1b[33m]\x1b[0m");
-    
+                                            println!("   \x1b[32mGenerated Regex: \x1b[0m\x1b[33m[\x1b[0m\x1b[34m0\x1b[0m\x1b[33m-\x1b[0m\x1b[34m9\x1b[0m\x1b[34ma\x1b[0m\x1b[33m-\x1b[0m\x1b[34mz\x1b[0m\x1b[34mA\x1b[0m\x1b[33m-\x1b[0m\x1b[34mZ\x1b[0m\x1b[33m]\x1b[0m");
                                             if regex.is_match(url) {
-                                                logger.green().log(&format!("   Pattern  {}  is match at {}", target_url, regex));
+                                                logger.green().log(&format!("   Pattern \x1b[33m{}{} \x1b[32mis matched at\x1b[0m \x1b[33m{}\x1b[0m", &target_url[..6], "[\x1b[0m\x1b[34m0\x1b[0m\x1b[33m-\x1b[0m\x1b[34m9\x1b[0m\x1b[34ma\x1b[0m\x1b[33m-\x1b[0m\x1b[34mz\x1b[0m\x1b[34mA\x1b[0m\x1b[33m-\x1b[0m\x1b[34mZ\x1b[0m\x1b[33m]\x1b[0m", url));
                                             }else {
-                                                logger.green().log(&format!("   Pattern  {}  is not match at {}", target_url, regex));
+                                                logger.green().log(&format!("   Pattern  {}  is not matched at {}", target_url, regex));
                                             }
 
                                             regex.is_match(url)
@@ -142,7 +140,7 @@ impl Router{
             Some(route_tuple) => {
                 let (name, handler) = route_tuple;
     
-                logger.log(&format!("   Handler: {}", name));
+                logger.log(&format!("   Method: {}", name));
     
                 let data = match data.len() {
                     0 => url.to_string(),

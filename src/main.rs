@@ -2,23 +2,17 @@ use std::io::{ Read, };
 use std::net::{ TcpListener, TcpStream };
 use std::str::SplitWhitespace;
 use regex::Regex;
-use mysql::*;
-use mysql::prelude::*;
 
 mod logger;
-
-mod method;
-use method::*;
-
-mod router;
-use router::Router;
-
+mod service;
 mod controller;
-
 mod util;
-
 mod db;
-use db::connect::DataBaseAccess;
+mod method;
+mod router;
+
+use method::*;
+use router::Router;
 
 fn main() {
     const PORT: i32 = 3000;

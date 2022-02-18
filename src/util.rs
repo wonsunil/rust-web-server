@@ -16,3 +16,19 @@ pub fn replace(target_string: String, change_string: Vec<&str>, replace_string: 
 // pub fn type_of<T>(_: T) -> &'static str {
 //     type_name::<T>()
 // }
+
+macro_rules! map {
+    { $($key:expr => $value:tt), + } => {
+        {
+            let mut map = ::std::collections::HashMap::new();
+
+            $(
+                map.insert($key, $value);
+            )+
+
+            map
+        }
+    }
+}
+
+pub(crate) use map;

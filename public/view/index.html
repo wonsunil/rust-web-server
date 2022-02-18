@@ -8,14 +8,14 @@
         window.onload = () => {
             const $testButton = document.querySelector("#test");
             $testButton.addEventListener("click", () => {
-                fetch("/", {
+                fetch("/user/register", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        test: "test",
-                        test2: "test2"
+                        id: "test",
+                        password: "test"
                     })
                 })
                 .then(req => req.json())
