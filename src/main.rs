@@ -34,9 +34,13 @@ fn main() {
         let mut data = "";
 
         for header in request.split("\n") {
-            let mut header = header.split(": ");
-            let header_info: &str = header.nth(0).unwrap();
+            let header = header.split(": ");
+            let header_info: &str = header.clone().nth(0).unwrap();
+            let header_data = header.clone().nth(1);
 
+            if header_info == "Sec-Fetch-Dest" && header_data.unwrap() == "image\r" {
+                request_type = "Image Request";
+            };
             if header_info == "Content-Type" {
                 request_type = "Json Request";
             };

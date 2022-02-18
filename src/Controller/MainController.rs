@@ -14,6 +14,7 @@ pub fn new() -> Router {
 
     route.add_router(Method::Get, "/", "main_handler", |_text| -> String { String::from("index") });
     route.add_router(Method::Get, "/test", "test_handler", |_text| -> String { String::from("test") });
+    route.add_router(Method::Get, "/favicon.ico", "favicon", |text| -> String { String::from("favicon.ico") });
 
     //rest
     route.add_router(Method::Post, "/", "main_post_handler", |request| -> String {

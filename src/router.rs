@@ -147,8 +147,12 @@ impl Router{
                     _ => data.to_string()
                 };
                 
-                if request_type == "Request" {
+                if request_type == "Request" && url != "/favicon.ico" {
                     let content = get_content_format("public/view/".to_owned() + &handler(data) + ".html");
+
+                    stream.write(content.as_bytes()).unwrap();
+                } else if request_type == "Image Request" || url == "/favicon.ico" {
+                    let content = get_image_content_format("public/image/".to_owned() + &handler(data));
 
                     stream.write(content.as_bytes()).unwrap();
                 }else {
@@ -235,8 +239,6 @@ impl Router{
         //css, js router
         route.add_router(Method::Get, "/css", "css_handler", |url| url);
     
-        route.ignore("/favicon.ico");
-    
         route
     }
 }
@@ -261,4 +263,17 @@ fn get_content_format(view_name: String) -> String {
             String::from("Error")
         }
     }
+}
+
+fn get_image_content_format(file_name: String) -> String {
+    let (mut logger, _) = logger::new();
+    let file = fs::read(&file_name).unwrap();
+
+    logger.log(&format!("   Find File Name: {}", file_name));
+
+    format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\nContent-Length: {}\r\n\r\n{}",
+        file.len(),
+        String::from_utf8_lossy(&file)
+    )
 }

@@ -52,6 +52,15 @@ pub fn new() -> Router {
             "message" => "회원가입에 실패했습니다."
         });
     });
+    route.add_router(Method::Post, "/user/login", "login", |request| -> String {
+        let _data = json::parse(&request);
+        let mut _user_service = UserService::new();
+
+        return json::stringify(map!{
+            "status" => "",
+            "message" => "로그인에 실패했습니다."
+        });
+    });
 
     route
 }
