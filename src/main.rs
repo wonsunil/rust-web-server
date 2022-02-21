@@ -89,14 +89,14 @@ fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String
                     route.call_router(stream, request_type, method, url, data);
                 },
                 None => {
+                    logger.log("   \x1b[33mError:\x1b[0m \x1b[Request url is not allowed\x1b[0m");
                     logger.log("]");
-                    error_logger.log("Request url is not allowed");
                 }
             }
         },
         None => {
+            logger.log("   \x1b[33mError:\x1b[0m \x1b[Http Method is not support\x1b[0m");
             logger.log("]");
-            error_logger.log("Http Method is not support");
         }
     }
 }

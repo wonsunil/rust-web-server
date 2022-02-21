@@ -154,14 +154,15 @@ impl Router{
 
                     stream.write(content.as_bytes()).unwrap();
                 } else if request_type == "Image Request" || url == "/favicon.ico" {
-                    let content = get_image_content_format("public/image/".to_owned() + &handler(data));
+                    let content = get_image_content("public/image/".to_owned() + &handler(data));
                     let formatted_content = format!(
-                        "HTTP/1.1 200 OK\r\nContent-Type: image/*\r\nContent-Length: {}\r\n\r\n",
-                        content.len(),
+                        "HTTP/1.1 200 OK\r\nContent-Type: image/{}\r\nContent-Length: {}\r\n\r\n",
+                        content.0,
+                        content.1.len(),
                     );
 
                     stream.write(formatted_content.as_bytes()).unwrap();
-                    stream.write_all(&content).unwrap();
+                    stream.write_all(&content.1).unwrap();
                 }else {
                     let contents = handler(data);
                     let content = format!(
@@ -272,11 +273,23 @@ fn get_content_format(view_name: String) -> String {
     }
 }
 
-fn get_image_content_format(file_name: String) -> Vec<u8> {
+fn get_image_content(file_name: String) -> (String, Vec<u8>) {
     let (mut logger, _) = logger::new();
     let file = fs::read(&file_name).unwrap();
+    let file_type = file_name.split(".").collect::<Vec<&str>>();
+    let mime_type = match file_type.get(1) {
+        Some(mime_type) => {
+            match mime_type {
+                &"ico" => "x-icon",
+                _ => mime_type
+            }
+        },
+        None => {
+            ""
+        }
+    };
 
     logger.log(&format!("   Find File Name: {}", file_name));
 
-    file
+    (mime_type.into(), file)
 }
