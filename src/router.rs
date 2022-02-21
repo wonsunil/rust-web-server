@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::fs;
 use std::io::Write;
 use std::net::TcpStream;
@@ -153,8 +155,13 @@ impl Router{
                     stream.write(content.as_bytes()).unwrap();
                 } else if request_type == "Image Request" || url == "/favicon.ico" {
                     let content = get_image_content_format("public/image/".to_owned() + &handler(data));
+                    let formatted_content = format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: image/*\r\nContent-Length: {}\r\n\r\n",
+                        content.len(),
+                    );
 
-                    stream.write(content.as_bytes()).unwrap();
+                    stream.write(formatted_content.as_bytes()).unwrap();
+                    stream.write_all(&content).unwrap();
                 }else {
                     let contents = handler(data);
                     let content = format!(
@@ -265,15 +272,11 @@ fn get_content_format(view_name: String) -> String {
     }
 }
 
-fn get_image_content_format(file_name: String) -> String {
+fn get_image_content_format(file_name: String) -> Vec<u8> {
     let (mut logger, _) = logger::new();
     let file = fs::read(&file_name).unwrap();
 
     logger.log(&format!("   Find File Name: {}", file_name));
 
-    format!(
-        "HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\nContent-Length: {}\r\n\r\n{}",
-        file.len(),
-        String::from_utf8_lossy(&file)
-    )
+    file
 }
