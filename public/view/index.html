@@ -8,7 +8,7 @@
         window.onload = () => {
             const $testButton = document.querySelector("#test");
             $testButton.addEventListener("click", () => {
-                fetch("/user/register", {
+                fetch("/user/login", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

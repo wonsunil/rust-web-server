@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+
 use std::io::{ Read, };
 use std::net::{ TcpListener, TcpStream };
 use std::str::SplitWhitespace;
@@ -41,9 +45,10 @@ fn main() {
             if header_info == "Sec-Fetch-Dest" && header_data.unwrap() == "image\r" {
                 request_type = "Image Request";
             };
-            if header_info == "Content-Type" {
+            if header_info == "Content-Type" && header_data.unwrap() == "application/json\r" {
                 request_type = "Json Request";
             };
+
             if header_info == "Content-Length" {
                 let regex = Regex::new(r#"\{[a-zA-Z0-9":,]*\}*"#).unwrap();
                 let result = regex.find(&request).unwrap();
@@ -67,7 +72,7 @@ fn main() {
 }
 
 fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String, parts: &mut SplitWhitespace, data: &str) {
-    let (mut logger, mut error_logger) = logger::new();
+    let (mut logger, _) = logger::new();
 
     match parts.next() {
         Some(method) => {
@@ -89,13 +94,13 @@ fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String
                     route.call_router(stream, request_type, method, url, data);
                 },
                 None => {
-                    logger.log("   \x1b[33mError:\x1b[0m \x1b[Request url is not allowed\x1b[0m");
+                    logger.log("   \x1b[33mError:\x1b[0m \x1b[31mRequest url is not allowed\x1b[0m");
                     logger.log("]");
                 }
             }
         },
         None => {
-            logger.log("   \x1b[33mError:\x1b[0m \x1b[Http Method is not support\x1b[0m");
+            logger.log("   \x1b[33mError:\x1b[0m \x1b[31mHttp Method is not support\x1b[0m");
             logger.log("]");
         }
     }

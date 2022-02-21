@@ -19,33 +19,33 @@ pub fn new() -> Router {
 
     //rest
     route.add_router(Method::Post, "/user/register", "user_register", |request| -> String {
-        let data = json::parse(&request);
-        let mut user_service = UserService::new();
+        // let data = json::parse(&request);
+        // let mut user_service = UserService::new();
         
-        let id = data.get("id");
-        let password = data.get("password");
+        // let id = data.get("id");
+        // let password = data.get("password");
 
-        let users = user_service.query("select id from user_info where id = :id", map!{ "id" => id });
+        // let users = user_service.selectUserById(id);
 
-        if users.len() > 0 {
-            return json::stringify(map!{
-                "status" => "fail",
-                "message" => "이미 존재하는 아이디입니다."
-            });
-        }
+        // if users.len() > 0 {
+        //     return json::stringify(map!{
+        //         "status" => "fail",
+        //         "message" => "이미 존재하는 아이디입니다."
+        //     });
+        // }
 
-        let id = data.get("id");
-        let result: bool = user_service.insert_user(map!{
-            "id" => id,
-            "password" => password
-        });
+        // let id = data.get("id");
+        // let result: bool = user_service.insert_user(map!{
+        //     "id" => id,
+        //     "password" => password
+        // });
 
-        if result {
-            return json::stringify(map!{
-                "status" => "success",
-                "message" => "회원가입이 완료되었습니다."
-            });
-        };
+        // if result {
+        //     return json::stringify(map!{
+        //         "status" => "success",
+        //         "message" => "회원가입이 완료되었습니다."
+        //     });
+        // };
 
         return json::stringify(map!{
             "status" => "fail",
@@ -53,12 +53,32 @@ pub fn new() -> Router {
         });
     });
     route.add_router(Method::Post, "/user/login", "login", |request| -> String {
-        let _data = json::parse(&request);
-        let mut _user_service = UserService::new();
+        let data = json::parse(&request);
+        let id = data.get("id");
+        let password = data.get("password");
+        let mut user_service = UserService::new();
+        let user = user_service.selectUserById(&id);
+
+        if user.len() <= 0 {
+            return json::stringify(map!{
+                "status" => "",
+                "message" => "등록되지 않은 아이디입니다."
+            });
+        };
+
+        let user = user_service.selectUserByIdAndPassword(map!{ "id" => id, "password" => password });
+
+        if user.len() <= 0 {
+            return json::stringify(map!{
+                "status" => "",
+                "message" => "잘못된 비밀번호입니다."
+            });
+        };
 
         return json::stringify(map!{
             "status" => "",
-            "message" => "로그인에 실패했습니다."
+            "message" => "로그인에 성공했습니다.",
+            "cookie" => "isLogin=true"
         });
     });
 

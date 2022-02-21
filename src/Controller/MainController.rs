@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::router::Router;
 use crate::logger;
 use crate::method::*;
-use crate::util::{ json };
+use crate::util::{ json, map };
 
 pub fn new() -> Router {
     let mut route = Router{
@@ -22,11 +22,10 @@ pub fn new() -> Router {
         let data = json::parse(&request);
         logger.log(&format!("   Request Params: {:?}", data));
 
-        let mut map: HashMap<&str, &str> = HashMap::new();
-        map.insert("status", "success");
-        map.insert("message", "test-success");
-
-        json::stringify(map)
+        json::stringify(map!{
+            "status" => "success",
+            "message" => "test-success"
+        })
     });
 
     route

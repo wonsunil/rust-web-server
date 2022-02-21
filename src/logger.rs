@@ -1,4 +1,5 @@
-#[allow(dead_code)]
+#![allow(dead_code)]
+
 pub struct Logger{
     color: Color
 }
@@ -29,7 +30,6 @@ enum Color{
     BackgroundWhite,
 }
 
-#[allow(dead_code)]
 impl Logger{
     pub fn black(&mut self) -> &mut Logger {
         self.color = Color::Black;

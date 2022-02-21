@@ -31,4 +31,19 @@ macro_rules! map {
     }
 }
 
+macro_rules! vector {
+    { $($value:tt), + } => {
+        {
+            let mut vec = std::vec::Vec::new();
+
+            $(
+                vec.push($value);
+            )+
+
+            vec
+        }
+    }
+}
+
 pub(crate) use map;
+pub(crate) use vector;

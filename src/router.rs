@@ -9,6 +9,7 @@ use substring::Substring;
 
 use crate::method::*;
 use crate::logger;
+use crate::util::json;
 use crate::controller::{ MainController, UserController };
 
 type Expr = Box<dyn Fn(String) -> String>;
@@ -165,6 +166,10 @@ impl Router{
                     stream.write_all(&content.1).unwrap();
                 }else {
                     let contents = handler(data);
+                    let parse_content = json::parse(&contents);
+                    let cookie = parse_content.get("cookie");
+                    println!("{:?}", cookie);
+
                     let content = format!(
                         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
                         contents.len(),
@@ -260,7 +265,7 @@ fn get_content_format(view_name: String) -> String {
             logger.log(&format!("   Find File Name: {}", view_name));
 
             format!(
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nSet-Cookie: test=asdf\r\n\r\n{}",
                 contents.len(),
                 contents
             )
