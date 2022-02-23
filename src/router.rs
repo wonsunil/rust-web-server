@@ -188,11 +188,10 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".css")); 
+                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".css"));
 
                             if content == "Error" {
                                 logger.log("]");
-                                println!("");
 
                                 return;
                             };
@@ -201,7 +200,6 @@ impl Router{
                             stream.flush().unwrap();
 
                             logger.log("]");
-                            println!("");
                         },
                         None => {
                             error_logger.log("Invalid css address");
@@ -218,11 +216,10 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".js")); 
+                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".js"));
 
                             if content == "Error" {
                                 logger.log("]");
-                                println!("");
 
                                 return;
                             };
@@ -231,7 +228,6 @@ impl Router{
                             stream.flush().unwrap();
 
                             logger.log("]");
-                            println!("");
                         },
                         None => {
                             error_logger.log("Invalid js address");
@@ -291,13 +287,13 @@ fn get_content_format(view_name: String) -> String {
             logger.log(&format!("   Find File Name: {}", view_name));
 
             format!(
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nSet-Cookie: test=asdf\r\n\r\n{}",
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
                 contents.len(),
                 contents
             )
         },
         Err(_) => {
-            logger.log("   \x1b[33mError:\x1b[0m \x1b[31mInvalid File Name\x1b[0m");
+            logger.log("   \x1b[33mError:\x1b[0m \x1b[31mFile not found\x1b[0m");
 
             String::from("Error")
         }
