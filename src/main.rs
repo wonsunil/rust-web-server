@@ -42,8 +42,21 @@ fn main() {
             let header_info: &str = header.clone().nth(0).unwrap();
             let header_data = header.clone().nth(1);
 
-            if header_info == "Sec-Fetch-Dest" && header_data.unwrap() == "image\r" {
-                request_type = "Image Request";
+            if header_info == "Sec-Fetch-Dest" {
+                request_type = match header_data.unwrap() {
+                    "image\r" => {
+                        "Image Request"
+                    },
+                    "style\r" => {
+                        "Stylesheet Request"
+                    },
+                    "script\r" => {
+                        "Javascript Request"
+                    },
+                    _ => {
+                        "Request"
+                    }
+                }
             };
             if header_info == "Content-Type" && header_data.unwrap() == "application/json\r" {
                 request_type = "Json Request";

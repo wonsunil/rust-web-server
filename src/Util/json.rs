@@ -1,7 +1,7 @@
 use std::fmt;
 use std::collections::HashMap;
 
-use crate::util::{ replace };
+use crate::util::{ replace, vector };
 
 pub struct Json{
     data: HashMap<String, String>
@@ -29,16 +29,12 @@ impl std::fmt::Debug for Json {
 }
 
 pub fn parse(string_data: &str) -> Json {   
-    let mut vec: Vec<&str> = Vec::new();
-    vec.push("{");
-    vec.push("}");
-    
-    let target_data = replace(String::from(string_data), vec, "");
+    let target_data = replace(string_data.to_string(), vector!{ "{", "}"}, "");
+    let target_data_map = target_data.split(",").map(|data| data);
     let mut data_map: HashMap<String, String> = HashMap::new();
 
-    for data in target_data.split(",") {
+    for data in target_data_map {
         let data: Vec<&str> = data.split(":").collect();
-
         let key = data[0].replace(r#"""#, "");
         let value = data[1].replace(r#"""#, "");
 

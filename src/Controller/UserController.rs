@@ -4,6 +4,7 @@ use crate::router::Router;
 use crate::method::*;
 use crate::util::{ map, json };
 use crate::service::UserService;
+use crate::logger;
 
 pub fn new() -> Router {
     let mut route = Router{
@@ -12,6 +13,8 @@ pub fn new() -> Router {
         ignore_url: Vec::new()
     };
 
+    route.add_router(Method::Get, "/user/register", "register_handler", |_| -> String { String::from("register") });
+    route.add_router(Method::Get, "/user/login", "login_handler", |_| -> String { String::from("login") });
     route.add_router(Method::Get, "/user/:userId", "user_test_handler", |request| -> String {
         println!("   Request Parameter: {:?}", request);
         String::from("profile")
@@ -19,33 +22,39 @@ pub fn new() -> Router {
 
     //rest
     route.add_router(Method::Post, "/user/register", "user_register", |request| -> String {
-        // let data = json::parse(&request);
-        // let mut user_service = UserService::new();
+        let (mut logger, _) = logger::new();
+        let data = json::parse(&request);
+        let mut user_service = UserService::new();
+
+        logger.log("   UserService[");
         
-        // let id = data.get("id");
-        // let password = data.get("password");
+        let id = data.get("id");
+        let password = data.get("password");
+        let users = user_service.selectUserById(&id);
 
-        // let users = user_service.selectUserById(id);
+        if users.len() > 0 {
+            logger.log("   ]");
 
-        // if users.len() > 0 {
-        //     return json::stringify(map!{
-        //         "status" => "fail",
-        //         "message" => "이미 존재하는 아이디입니다."
-        //     });
-        // }
+            return json::stringify(map!{
+                "status" => "fail",
+                "message" => "이미 존재하는 아이디입니다."
+            });
+        }
 
-        // let id = data.get("id");
-        // let result: bool = user_service.insert_user(map!{
-        //     "id" => id,
-        //     "password" => password
-        // });
+        let id = data.get("id");
+        let result: bool = user_service.insertUser(map!{
+            "id" => id,
+            "password" => password
+        });
 
-        // if result {
-        //     return json::stringify(map!{
-        //         "status" => "success",
-        //         "message" => "회원가입이 완료되었습니다."
-        //     });
-        // };
+        logger.log("   ]");
+
+        if result {
+            return json::stringify(map!{
+                "status" => "success",
+                "message" => "회원가입이 완료되었습니다."
+            });
+        };
 
         return json::stringify(map!{
             "status" => "fail",

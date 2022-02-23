@@ -26,9 +26,31 @@ impl Service{
         sql
     }
 
-    fn set_where_clause<S>(&mut self, params: &HashMap<&str, S>) -> String
+    fn create_value_claues<S>(&mut self, params: &Vec<&str>) -> String
     where
-        S: Into<String> + std::fmt::Debug
+        S: Into<String>
+    {
+        let mut sql = String::from("");
+
+        let length = params.len();
+        let mut index = 0;
+
+        params.iter().for_each(|key| {
+            sql.push_str(&(":".to_owned() + key));
+
+            index += 1;
+
+            if index < length {
+                sql.push_str(", ");
+            };
+        });
+
+        sql
+    }
+
+    fn create_where_clause<S>(&mut self, params: &HashMap<&str, S>) -> String
+    where
+        S: Into<String>
     {
         let mut sql = String::from("");
 
@@ -66,22 +88,33 @@ impl Service{
         result
     }
 
-    pub fn insert<S>(&self, table: &str, params: Vec<&str>, values: HashMap<&str, S>) -> bool
+    pub fn insert<S>(&mut self, table: &str, params: Vec<&str>, values: HashMap<&str, S>) -> bool
     where
-        S: Into<String>
+        S: Into<String> + std::fmt::Debug
     {
-        let query = format!("insert into {}({})", table, params.join(","));
+        let (mut logger, _) = logger::new();
+        let mut sql = format!("insert into {}({}) values({})", table, params.join(", "), self.create_value_claues::<S>(&params));
 
-        println!("{}", query);
+        logger.log(&format!("         Query: {}", sql));
+        logger.log(&format!("         Query Parameter: {:?}", &values));
 
-        false
+        sql = self.set_sql_parameter(&sql, values);
+
+        match self.pool.get_conn().unwrap().query_drop(sql) {
+            Ok(_) => {
+                true
+            },
+            Err(_) => {
+                false
+            }
+        }
     }
 
     pub fn select<S>(&mut self, table: &str, params: Vec<&str>, values: HashMap<&str, S>) -> HashMap<String, String>
     where
         S: Into<String> + std::fmt::Debug
     {
-        let mut sql = format!("select {} from {} where {}", params.join(", "), table, self.set_where_clause(&values));
+        let mut sql = format!("select {} from {} where {}", params.join(", "), table, self.create_where_clause(&values));
         let (mut logger, _) = logger::new();
         let mut keys: Vec<String> = Vec::new();
 
@@ -91,7 +124,8 @@ impl Service{
 
         let mut result: HashMap<String, String> = HashMap::new();
 
-        logger.log(&format!("   Query: {}", sql));
+        logger.log(&format!("         Query: {}", sql));
+        logger.log(&format!("         Query Parameter: {:?}", &values));
 
         sql = self.set_sql_parameter(&sql, values);
 

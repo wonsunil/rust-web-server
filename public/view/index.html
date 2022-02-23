@@ -4,31 +4,11 @@
     <meta charset="UTF-8">
     <title>Index Page</title>
     <link rel="stylesheet" href="/css/index">
-    <script>
-        window.onload = () => {
-            const $testButton = document.querySelector("#test");
-            $testButton.addEventListener("click", () => {
-                fetch("/user/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        id: "test",
-                        password: "test"
-                    })
-                })
-                .then(req => req.json())
-                .then(res => {
-                    console.log(res);
-                });
-            });
-        };
-    </script>
 </head>
 <body>
     Hello, World!
 
-    <button id="test">test</button>
+    <a href="/user/register">회원가입</a>
+    <a href="/user/login">로그인</a>
 </body>
 </html>

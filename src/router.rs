@@ -25,27 +25,17 @@ impl Router{
     where
         H: Fn(String) -> String + 'static
     {
-        let find = self.find_router(&method, url);
         let (url, name) = (url.to_string(), name.to_string());
 
-        match find{
-            Some(route_tuple) => {
-                let (name, _) = route_tuple;
-
-                println!("Already Registered Handler: {}, Url: {}", name, url);
+        match method{
+            Method::Get => {
+                self.get_route.insert(url, (name, Box::new(handler)));
             },
-            None => {
-                match method{
-                    Method::Get => {
-                        self.get_route.insert(url, (name, Box::new(handler)));
-                    },
-                    Method::Post => {
-                        self.post_route.insert(url, (name, Box::new(handler)));
-                    },
-                    _ => {
+            Method::Post => {
+                self.post_route.insert(url, (name, Box::new(handler)));
+            },
+            _ => {
 
-                    }
-                }
             }
         }
     }
@@ -59,13 +49,14 @@ impl Router{
 
                 let find = get_route.find(|route| {
                     let (target_url, _) = route;
+                    let regex = Regex::new(":").unwrap();
 
-                    if target_url[..] == url.to_string() {
+                    if target_url[0..] == url.to_string() {
                         return true;
                     }else {
-                        match target_url.find(":") {
-                            Some(index) => {
-                                let start_index = index;
+                        match regex.is_match(url) {
+                            true => {
+                                let start_index = target_url.find(":").unwrap();
                                 let end = target_url[start_index..].find("/");
 
                                 if url.starts_with(&target_url[..start_index]) {
@@ -95,7 +86,7 @@ impl Router{
                                     return result;   
                                 };
                             },
-                            None => {
+                            false => {
                                 
                             }
                         }
@@ -167,8 +158,11 @@ impl Router{
                 }else {
                     let contents = handler(data);
                     let parse_content = json::parse(&contents);
-                    let cookie = parse_content.get("cookie");
-                    println!("{:?}", cookie);
+
+                    logger.log(&format!("   Response {:?}", parse_content));
+
+                    // let cookie = parse_content.get("cookie");
+                    // println!("{:?}", cookie);
 
                     let content = format!(
                         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
@@ -185,6 +179,7 @@ impl Router{
             },
             None => {
                 let css_request_regex = Regex::new("/css/[a-zA-Z]*").unwrap();
+                let js_request_regex = Regex::new("/js/[a-zA-Z]*").unwrap();
 
                 if css_request_regex.is_match(url) {
                     match self.get_route.get("/css") {
@@ -210,6 +205,36 @@ impl Router{
                         },
                         None => {
                             error_logger.log("Invalid css address");
+                        }
+                    };
+
+                    return;
+                };
+
+                if js_request_regex.is_match(url) {
+                    match self.get_route.get("/js") {
+                        Some(route_tuple) => {
+                            let (name, handler) = route_tuple;
+
+                            logger.log(&format!("   Handler: {}", name));
+
+                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".js")); 
+
+                            if content == "Error" {
+                                logger.log("]");
+                                println!("");
+
+                                return;
+                            };
+
+                            stream.write(content.as_bytes()).unwrap();
+                            stream.flush().unwrap();
+
+                            logger.log("]");
+                            println!("");
+                        },
+                        None => {
+                            error_logger.log("Invalid js address");
                         }
                     };
 
@@ -251,6 +276,7 @@ impl Router{
     
         //css, js router
         route.add_router(Method::Get, "/css", "css_handler", |url| url);
+        route.add_router(Method::Get, "/js", "js_handler", |url| url);
     
         route
     }
