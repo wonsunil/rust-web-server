@@ -8,11 +8,23 @@ pub struct Json{
 }
 
 impl Json{
+    pub fn get_data(&self) -> HashMap<String, String> {
+        self.data.clone()
+    }
+
     pub fn get(&self, key: &str) -> String {
         match self.data.get(key.into()) {
             Some(value) => value.into(),
             None => "".into()
         }
+    }
+
+    pub fn insert(&mut self, key: String, value: String) {
+        self.data.insert(key.into(), value.into());
+    }
+
+    pub fn insert_map(&mut self, key: String, value: HashMap<String, String>) {
+        self.data.insert(key, stringify(value));
     }
 }
 
@@ -35,10 +47,17 @@ pub fn parse(string_data: &str) -> Json {
 
     for data in target_data_map {
         let data: Vec<&str> = data.split(":").collect();
-        let key = data[0].replace(r#"""#, "");
-        let value = data[1].replace(r#"""#, "");
 
-        data_map.insert(key.into(), value.into());
+        if data.len() != 0 && data[0] != "" {
+            let key = data[0].replace(r#"""#, "");
+            let mut value = data[1].replace(r#"""#, "");
+
+            if key == "session" {
+                value = stringify(parse(&value).get_data());
+            };
+
+            data_map.insert(key.into(), value.into());
+        }
     }
 
     Json{
@@ -84,4 +103,8 @@ where
     };
 
     json_string
+}
+
+pub fn vector_stringify(datas: Vec<String>) -> String {
+    datas.join(",")
 }

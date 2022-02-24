@@ -5,6 +5,7 @@ use crate::method::*;
 use crate::util::{ map, json };
 use crate::service::UserService;
 use crate::logger;
+use crate::session::SessionStorage::SessionStorage;
 
 pub fn new() -> Router {
     let mut route = Router{
@@ -62,13 +63,24 @@ pub fn new() -> Router {
         });
     });
     route.add_router(Method::Post, "/user/login", "login", |request| -> String {
+        let (mut logger, _) = logger::new();
         let data = json::parse(&request);
         let id = data.get("id");
         let password = data.get("password");
         let mut user_service = UserService::new();
+
+        let mut session = json::parse(&data.get("session"));
+
+        session.insert("test".into(), "test".into());
+        session.insert("isLogin".into(), "true".into());
+
+        logger.log("   UserService [");
+
         let user = user_service.selectUserById(&id);
 
         if user.len() <= 0 {
+            logger.log("   ]");
+
             return json::stringify(map!{
                 "status" => "",
                 "message" => "등록되지 않은 아이디입니다."
@@ -78,17 +90,29 @@ pub fn new() -> Router {
         let user = user_service.selectUserByIdAndPassword(map!{ "id" => id, "password" => password });
 
         if user.len() <= 0 {
+            logger.log("   ]");
+
             return json::stringify(map!{
                 "status" => "",
                 "message" => "잘못된 비밀번호입니다."
             });
         };
 
-        return json::stringify(map!{
-            "status" => "",
-            "message" => "로그인에 성공했습니다.",
-            "cookie" => "isLogin=true"
-        });
+        let mut map = map!{
+            "status" => "200",
+            "message" => "로그인에 성공했습니다."
+        };
+
+        let session_data = session.get_data();
+        let json_session_data = &json::stringify(session_data);
+
+        map.insert("session", json_session_data);
+
+        println!("{:?}", map);
+
+        logger.log("   ]");
+
+        return json::stringify(map);
     });
 
     route

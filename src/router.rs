@@ -9,7 +9,10 @@ use substring::Substring;
 
 use crate::method::*;
 use crate::logger;
+use crate::session;
 use crate::util::json;
+use crate::Session;
+use crate::SessionStorage::SessionStorage;
 use crate::controller::{ MainController, UserController };
 
 type Expr = Box<dyn Fn(String) -> String>;
@@ -126,7 +129,7 @@ impl Router{
         }
     }
 
-    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str) {
+    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str, session: Session) {
         let (mut logger, mut error_logger) = logger::new();
         let response = self.find_router(&method, url);
 
@@ -156,17 +159,19 @@ impl Router{
                     stream.write(formatted_content.as_bytes()).unwrap();
                     stream.write_all(&content.1).unwrap();
                 }else {
-                    let contents = handler(data);
+                    let mut t = json::parse(&data);
+                    t.insert("asdf".into(), "asdf".into());
+                    t.insert_map("session".into(), session.get_data());
+
+                    let contents = handler(json::stringify(t.get_data()));
                     let parse_content = json::parse(&contents);
 
                     logger.log(&format!("   Response {:?}", parse_content));
 
-                    // let cookie = parse_content.get("cookie");
-                    // println!("{:?}", cookie);
-
                     let content = format!(
-                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nSet-Cookie: sessionid={}\r\n\r\n{}",
                         contents.len(),
+                        session.get_id(),
                         contents
                     );
 
@@ -188,7 +193,7 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".css"));
+                            let content = get_resource_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".css"));
 
                             if content == "Error" {
                                 logger.log("]");
@@ -216,7 +221,7 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_content_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".js"));
+                            let content = get_resource_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".js"));
 
                             if content == "Error" {
                                 logger.log("]");
@@ -285,6 +290,28 @@ fn get_content_format(view_name: String) -> String {
     match contents {
         Ok(contents) => {
             logger.log(&format!("   Find File Name: {}", view_name));
+
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                contents.len(),
+                contents
+            )
+        },
+        Err(_) => {
+            logger.log("   \x1b[33mError:\x1b[0m \x1b[31mFile not found\x1b[0m");
+
+            String::from("Error")
+        }
+    }
+}
+
+fn get_resource_format(file_name: String) -> String {
+    let (mut logger, _) = logger::new();
+    let contents = fs::read_to_string(&file_name);
+
+    match contents {
+        Ok(contents) => {
+            logger.log(&format!("   Find File Name: {}", file_name));
 
             format!(
                 "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",

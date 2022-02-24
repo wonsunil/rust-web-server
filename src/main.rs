@@ -5,6 +5,7 @@
 use std::io::{ Read, };
 use std::net::{ TcpListener, TcpStream };
 use std::str::SplitWhitespace;
+use std::collections::HashMap;
 use regex::Regex;
 
 mod logger;
@@ -14,12 +15,16 @@ mod util;
 mod db;
 mod method;
 mod router;
+mod session;
 
 use method::*;
 use router::Router;
+use session::Session::Session;
+use session::SessionStorage;
 
 fn main() {
     const PORT: i32 = 3000;
+    let mut session_storage = SessionStorage::new();
     let mut route: Router = Router::new();
     let (mut logger, _) = logger::new();
     let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
@@ -37,29 +42,40 @@ fn main() {
         let mut request_type = "Request";
         let mut data = "";
 
+        let cookie_regex = Regex::new("Cookie: [0-9a-zA-Z]*=[0-9a-zA-Z]*").unwrap();
+        let mut session: Session = Session::empty();
+
+        if cookie_regex.is_match(&request) {
+            let cookie = cookie_regex.find(&request).unwrap();
+            let cookie = &request[cookie.start()..cookie.end()];
+            let session_id = cookie.split("=").clone().nth(1).unwrap();
+            
+            session = session_storage.get(session_id.into());
+        };
+
         for header in request.split("\n") {
             let header = header.split(": ");
             let header_info: &str = header.clone().nth(0).unwrap();
             let header_data = header.clone().nth(1);
 
             if header_info == "Sec-Fetch-Dest" {
-                request_type = match header_data.unwrap() {
+                match header_data.unwrap() {
                     "image\r" => {
-                        "Image Request"
+                        request_type = "Image Request"
                     },
                     "style\r" => {
-                        "Stylesheet Request"
+                        request_type = "Stylesheet Request"
                     },
                     "script\r" => {
-                        "Javascript Request"
+                        request_type = "Javascript Request"
                     },
                     _ => {
-                        "Request"
+                        
                     }
-                }
+                };
             };
             if header_info == "Content-Type" && header_data.unwrap() == "application/json\r" {
-                request_type = "Json Request";
+                request_type = "JSON Request";
             };
 
             if header_info == "Content-Length" {
@@ -80,11 +96,11 @@ fn main() {
         
         let parts = &mut request_line.split_whitespace();
         
-        handle_connection(stream, &mut route, request_type.to_string(), parts, data);
+        handle_connection(stream, &mut route, request_type.to_string(), parts, data, session);
     }
 }
 
-fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String, parts: &mut SplitWhitespace, data: &str) {
+fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String, parts: &mut SplitWhitespace, data: &str, session: Session) {
     let (mut logger, _) = logger::new();
 
     match parts.next() {
@@ -104,7 +120,7 @@ fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String
                         return;
                     };
 
-                    route.call_router(stream, request_type, method, url, data);
+                    route.call_router(stream, request_type, method, url, data, session);
                 },
                 None => {
                     logger.log("   \x1b[33mError:\x1b[0m \x1b[31mRequest url is not allowed\x1b[0m");
