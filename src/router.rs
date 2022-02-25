@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use regex::Regex;
 use substring::Substring;
 
+use crate::http::request::HttpRequest;
 use crate::method::*;
 use crate::logger;
 use crate::session;
@@ -15,7 +16,7 @@ use crate::Session;
 use crate::SessionStorage::SessionStorage;
 use crate::controller::{ MainController, UserController };
 
-type Expr = Box<dyn Fn(String) -> String>;
+type Expr = Box<dyn Fn(HttpRequest) -> String>;
 
 pub struct Router{
     pub get_route: HashMap<String, (String, Expr)>,
@@ -26,7 +27,7 @@ pub struct Router{
 impl Router{
     pub fn add_router<H>(&mut self, method: Method, url: &str, name: &str, handler: H)
     where
-        H: Fn(String) -> String + 'static
+        H: Fn(HttpRequest) -> String + 'static
     {
         let (url, name) = (url.to_string(), name.to_string());
 
@@ -43,7 +44,7 @@ impl Router{
         }
     }
 
-    pub fn find_router(&mut self, method: &Method, url: &str) -> Option<&(String, Box<dyn Fn(String) -> String>)> {
+    pub fn find_router(&mut self, method: &Method, url: &str) -> Option<&(String, Box<dyn Fn(HttpRequest) -> String>)> {
         let (mut logger, _) = logger::new();
 
         match method{
@@ -276,8 +277,8 @@ impl Router{
         route.set(UserController::new());
     
         //css, js router
-        route.add_router(Method::Get, "/css", "css_handler", |url| url);
-        route.add_router(Method::Get, "/js", "js_handler", |url| url);
+        route.add_router(Method::Get, "/css", "css_handler", |request| request.get_request_url());
+        route.add_router(Method::Get, "/js", "js_handler", |request| request.get_request_url());
     
         route
     }

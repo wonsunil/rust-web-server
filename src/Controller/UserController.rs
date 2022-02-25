@@ -108,8 +108,6 @@ pub fn new() -> Router {
 
         map.insert("session", json_session_data);
 
-        println!("{:?}", map);
-
         logger.log("   ]");
 
         return json::stringify(map);

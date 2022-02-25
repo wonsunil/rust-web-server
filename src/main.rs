@@ -8,6 +8,7 @@ use std::str::SplitWhitespace;
 use std::collections::HashMap;
 use regex::Regex;
 
+mod http;
 mod logger;
 mod service;
 mod controller;

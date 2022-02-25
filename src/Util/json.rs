@@ -50,11 +50,14 @@ pub fn parse(string_data: &str) -> Json {
 
         if data.len() != 0 && data[0] != "" {
             let key = data[0].replace(r#"""#, "");
-            let mut value = data[1].replace(r#"""#, "");
+            let mut value = "".to_string();
 
+            
             if key == "session" {
                 value = stringify(parse(&value).get_data());
-            };
+            }else {
+                value = data[1].replace(r#"""#, "");
+            }
 
             data_map.insert(key.into(), value.into());
         }
@@ -67,7 +70,7 @@ pub fn parse(string_data: &str) -> Json {
 
 pub fn stringify<S, T: std::fmt::Debug>(datas: HashMap<S, T>) -> String
 where
-    S: Into<String>,
+    S: Into<String> + std::fmt::Display,
     T: std::fmt::Display
 {
     let datas = datas.into_iter();
@@ -84,13 +87,21 @@ where
                 break;
             };
 
-            json_string.push_str(r#"""#);
-            json_string += &key.into();
-            json_string.push_str(r#"""#);
-            json_string.push_str(":");
-            json_string.push_str(r#"""#);
-            json_string.push_str(&value.to_string());
-            json_string.push_str(r#"""#);
+            if key.to_string() == "session" {
+                json_string.push_str(r#"""#);
+                json_string += &key.into();
+                json_string.push_str(r#"""#);
+                json_string.push_str(":");
+                json_string.push_str(&value.to_string());
+            } else {
+                json_string.push_str(r#"""#);
+                json_string += &key.into();
+                json_string.push_str(r#"""#);
+                json_string.push_str(":");
+                json_string.push_str(r#"""#);
+                json_string.push_str(&value.to_string());
+                json_string.push_str(r#"""#);
+            }
             
             counter += 1;
             

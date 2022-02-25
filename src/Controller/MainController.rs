@@ -12,9 +12,9 @@ pub fn new() -> Router {
         ignore_url: Vec::new()
     };
 
-    route.add_router(Method::Get, "/", "main_handler", |_text| -> String { String::from("index") });
-    route.add_router(Method::Get, "/test", "test_handler", |_text| -> String { String::from("test") });
-    route.add_router(Method::Get, "/favicon.ico", "favicon", |_text| -> String { String::from("favicon.ico") });
+    route.add_router(Method::Get, "/", "main_handler", |_| -> String { String::from("index") });
+    route.add_router(Method::Get, "/test", "test_handler", |_| -> String { String::from("test") });
+    route.add_router(Method::Get, "/favicon.ico", "favicon", |_| -> String { String::from("favicon.ico") });
 
     //rest
     route.add_router(Method::Post, "/", "main_post_handler", |request| -> String {
