@@ -130,8 +130,9 @@ impl Router{
         }
     }
 
-    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str, session: Session) {
+    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str, session: &mut Session, session_storage: &mut SessionStorage) -> Option<Session> {
         let (mut logger, mut error_logger) = logger::new();
+        let mut return_value = Option::None;
         let response = self.find_router(&method, url);
 
         match response{
@@ -141,8 +142,8 @@ impl Router{
                 logger.log(&format!("   Method: {}", name));
     
                 let data = match data.len() {
-                    0 => url.to_string(),
-                    _ => data.to_string()
+                    0 => HttpRequest::new(url.to_string()),
+                    _ => HttpRequest::new_with_data(data.to_string())
                 };
                 
                 if request_type == "Request" && url != "/favicon.ico" {
@@ -157,15 +158,22 @@ impl Router{
                         content.1.len(),
                     );
 
+                    return_value = None;
+
                     stream.write(formatted_content.as_bytes()).unwrap();
                     stream.write_all(&content.1).unwrap();
                 }else {
-                    let mut t = json::parse(&data);
-                    t.insert("asdf".into(), "asdf".into());
+                    let mut t = json::parse(&data.get_data());
                     t.insert_map("session".into(), session.get_data());
 
-                    let contents = handler(json::stringify(t.get_data()));
+                    let contents = handler(HttpRequest::new_with_data(json::stringify(t.get_data())));
                     let parse_content = json::parse(&contents);
+
+                    // session.set_data(json::parse(&parse_content.get("session")).get_data());
+
+                    println!("{:?}", json::parse(&parse_content.get("session")));
+
+                    return_value = Some(session.clone());
 
                     logger.log(&format!("   Response {:?}", parse_content));
 
@@ -194,12 +202,12 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_resource_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".css"));
+                            let content = get_resource_format("public/".to_owned() + &handler(HttpRequest::new(url.substring(1, url.len()).to_string() + ".css")));
 
                             if content == "Error" {
                                 logger.log("]");
 
-                                return;
+                                return None;
                             };
 
                             stream.write(content.as_bytes()).unwrap();
@@ -212,7 +220,7 @@ impl Router{
                         }
                     };
 
-                    return;
+                    return None;
                 };
 
                 if js_request_regex.is_match(url) {
@@ -222,12 +230,12 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_resource_format("public/".to_owned() + &handler(url.substring(1, url.len()).to_string() + ".js"));
+                            let content = get_resource_format("public/".to_owned() + &handler(HttpRequest::new(url.substring(1, url.len()).to_string() + ".js")));
 
                             if content == "Error" {
                                 logger.log("]");
 
-                                return;
+                                return None;
                             };
 
                             stream.write(content.as_bytes()).unwrap();
@@ -240,13 +248,15 @@ impl Router{
                         }
                     };
 
-                    return;
+                    return None;
                 };
 
                 logger.log("   \x1b[33mError:\x1b[0m \x1b[31mNot Mapped Request Url\x1b[0m");
                 logger.log("]");
             }
         }
+
+        return_value
     }
 
     pub fn ignore(&mut self, url: &str) {

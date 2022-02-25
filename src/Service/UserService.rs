@@ -39,7 +39,7 @@ impl UserService{
     pub fn selectUserByIdAndPassword(&mut self, user_info: HashMap<&str, String>) -> HashMap<String, String> {
         let (mut logger, _) = logger::new();
         
-        logger.log("      SelectUserById[");
+        logger.log("      SelectUserByIdAndPassword[");
 
         let result = self.service.select("user_info", vector!{"id", "user_role"}, user_info);
 

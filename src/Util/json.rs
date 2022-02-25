@@ -1,7 +1,8 @@
 use std::fmt;
 use std::collections::HashMap;
+use regex::Regex;
 
-use crate::util::{ replace, vector };
+use crate::util::{ replace, contains, vector };
 
 pub struct Json{
     data: HashMap<String, String>
@@ -47,17 +48,20 @@ pub fn parse(string_data: &str) -> Json {
 
     for data in target_data_map {
         let data: Vec<&str> = data.split(":").collect();
-
+        
         if data.len() != 0 && data[0] != "" {
             let key = data[0].replace(r#"""#, "");
-            let mut value = "".to_string();
 
-            
+            #[allow(unused_assignments)]
+            let mut value = data[1].replace(r#"""#, "");
+
             if key == "session" {
-                value = stringify(parse(&value).get_data());
-            }else {
-                value = data[1].replace(r#"""#, "");
-            }
+                let start = string_data.find("session").unwrap();
+                let string = &string_data[start + 9..];
+                let end = string.find("}").unwrap();
+                
+                value = (&string[..end + 1]).to_string();
+            };
 
             data_map.insert(key.into(), value.into());
         }
@@ -82,17 +86,17 @@ where
 
         json_string.push_str(r#"{"#);
 
+        if contains(datas, "session") {
+            println!("Http Response");
+        };
+
         for (key, value) in datas {
             if counter > length {
                 break;
             };
 
             if key.to_string() == "session" {
-                json_string.push_str(r#"""#);
-                json_string += &key.into();
-                json_string.push_str(r#"""#);
-                json_string.push_str(":");
-                json_string.push_str(&value.to_string());
+                
             } else {
                 json_string.push_str(r#"""#);
                 json_string += &key.into();

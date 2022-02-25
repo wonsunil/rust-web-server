@@ -13,6 +13,15 @@ pub fn replace(target_string: String, change_string: Vec<&str>, replace_string: 
     new_string
 }
 
+pub fn contains<T, S>(iterable: T, key: S) -> bool
+where
+    S: Into<String>
+{
+    iterable.iter();
+
+    true
+}
+
 // pub fn type_of<T>(_: T) -> &'static str {
 //     type_name::<T>()
 // }

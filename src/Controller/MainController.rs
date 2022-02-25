@@ -19,7 +19,7 @@ pub fn new() -> Router {
     //rest
     route.add_router(Method::Post, "/", "main_post_handler", |request| -> String {
         let (mut logger, _) = logger::new();
-        let data = json::parse(&request);
+        let data = json::parse(&request.get_data());
         logger.log(&format!("   Request Params: {:?}", data));
 
         json::stringify(map!{

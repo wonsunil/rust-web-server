@@ -97,11 +97,11 @@ fn main() {
         
         let parts = &mut request_line.split_whitespace();
         
-        handle_connection(stream, &mut route, request_type.to_string(), parts, data, session);
+        handle_connection(stream, &mut route, request_type.to_string(), parts, data, &mut session, &mut session_storage);
     }
 }
 
-fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String, parts: &mut SplitWhitespace, data: &str, session: Session) {
+fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String, parts: &mut SplitWhitespace, data: &str, session: &mut Session, session_storage: &mut SessionStorage::SessionStorage) {
     let (mut logger, _) = logger::new();
 
     match parts.next() {
@@ -121,7 +121,18 @@ fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String
                         return;
                     };
 
-                    route.call_router(stream, request_type, method, url, data, session);
+                    let result = route.call_router(stream, request_type, method, url, data, session, session_storage);
+
+                    match result {
+                        Some(mut session) => {
+                            session_storage.set_session(&mut session);
+
+                            // println!("Session get data{:?}", session.get_data());
+                        },
+                        None => {
+                            println!("Default Request");
+                        }
+                    };
                 },
                 None => {
                     logger.log("   \x1b[33mError:\x1b[0m \x1b[31mRequest url is not allowed\x1b[0m");

@@ -17,14 +17,14 @@ pub fn new() -> Router {
     route.add_router(Method::Get, "/user/register", "register_handler", |_| -> String { String::from("register") });
     route.add_router(Method::Get, "/user/login", "login_handler", |_| -> String { String::from("login") });
     route.add_router(Method::Get, "/user/:userId", "user_test_handler", |request| -> String {
-        println!("   Request Parameter: {:?}", request);
+        println!("   Request Parameter: {:?}", request.get_data());
         String::from("profile")
     });
 
     //rest
     route.add_router(Method::Post, "/user/register", "user_register", |request| -> String {
         let (mut logger, _) = logger::new();
-        let data = json::parse(&request);
+        let data = json::parse(&request.get_data());
         let mut user_service = UserService::new();
 
         logger.log("   UserService[");
@@ -64,7 +64,7 @@ pub fn new() -> Router {
     });
     route.add_router(Method::Post, "/user/login", "login", |request| -> String {
         let (mut logger, _) = logger::new();
-        let data = json::parse(&request);
+        let data = json::parse(&request.get_data());
         let id = data.get("id");
         let password = data.get("password");
         let mut user_service = UserService::new();
@@ -105,7 +105,7 @@ pub fn new() -> Router {
 
         let session_data = session.get_data();
         let json_session_data = &json::stringify(session_data);
-
+        
         map.insert("session", json_session_data);
 
         logger.log("   ]");

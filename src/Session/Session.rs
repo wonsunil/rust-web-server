@@ -12,7 +12,9 @@ pub struct Session{
 
 impl fmt::Debug for Session {
     fn fmt(&self, format: &mut fmt::Formatter) -> fmt::Result {
-        write!(format, r#"Session[id: {}, data: {}]"#, self.id, json::stringify(self.data.clone()))
+        println!("Session self data {:?}", self.data);
+
+        write!(format, r#"Session [id: {}, data: {}]"#, self.id, json::stringify(self.data.clone()))
     }
 }
 
@@ -44,6 +46,8 @@ impl Session{
         for (key, value) in data {
             self.data.insert(key.into(), value.into());
         }
+
+        println!("session set_data self data {:?}", self.data);
     }
 
     pub fn empty() -> Session {

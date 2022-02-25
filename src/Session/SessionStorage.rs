@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::Session;
 
 pub struct SessionStorage{
-    session: Vec<Session>
+    pub session: Vec<Session>
 }
 
 impl SessionStorage{
@@ -33,9 +33,24 @@ impl SessionStorage{
 
                 self.session.push(session.clone());
 
-                session
+                return session;
             }
         }
+    }
+
+    pub fn set_session(&mut self, session: &mut Session) {
+        let id = session.get_id();
+
+        let find_session = self.session.iter().find(|session| {
+            println!("Session: {:?}", session);
+            if session.get_id() == id {
+                true
+            }else {
+                false
+            }
+        });
+
+        println!("find session {:?}", find_session);
     }
 
     pub fn clone(&self) -> SessionStorage {
