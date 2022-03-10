@@ -46,9 +46,13 @@ pub fn parse(string_data: &str) -> Json {
     let target_data_map = target_data.split(",").map(|data| data);
     let mut data_map: HashMap<String, String> = HashMap::new();
 
+    println!("input {}", string_data);
+
     for data in target_data_map {
         let data: Vec<&str> = data.split(":").collect();
         
+        println!("split {:?}", data);
+
         if data.len() != 0 && data[0] != "" {
             let key = data[0].replace(r#"""#, "");
 

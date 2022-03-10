@@ -193,15 +193,9 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_resource_format("public/".to_owned() + &handler(HttpRequest::new(url.substring(1, url.len()).to_string() + ".css")));
+                            let resource = get_resource_format("public/".to_owned() + &handler(HttpRequest::new(url.substring(1, url.len()).to_string() + ".css")));
 
-                            if content == "Error" {
-                                logger.log("]");
-
-                                return;
-                            };
-
-                            stream.write(content.as_bytes()).unwrap();
+                            stream.write(resource.as_bytes()).unwrap();
                             stream.flush().unwrap();
 
                             logger.log("]");
@@ -221,15 +215,9 @@ impl Router{
 
                             logger.log(&format!("   Handler: {}", name));
 
-                            let content = get_resource_format("public/".to_owned() + &handler(HttpRequest::new(url.substring(1, url.len()).to_string() + ".js")));
+                            let resource = get_resource_format("public/".to_owned() + &handler(HttpRequest::new(url.substring(1, url.len()).to_string() + ".js")));
 
-                            if content == "Error" {
-                                logger.log("]");
-
-                                return;
-                            };
-
-                            stream.write(content.as_bytes()).unwrap();
+                            stream.write(resource.as_bytes()).unwrap();
                             stream.flush().unwrap();
 
                             logger.log("]");
@@ -307,24 +295,31 @@ fn get_content_format(view_name: String) -> String {
 
 fn get_resource_format(file_name: String) -> String {
     let (mut logger, _) = logger::new();
-    let contents = fs::read_to_string(&file_name);
+    let file_content = fs::read_to_string(&file_name);
+    let content;
 
-    match contents {
+    match file_content {
         Ok(contents) => {
             logger.log(&format!("   Find File Name: {}", file_name));
 
-            format!(
+            content = format!(
                 "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
                 contents.len(),
                 contents
-            )
+            );
         },
         Err(_) => {
             logger.log("   \x1b[33mError:\x1b[0m \x1b[31mFile not found\x1b[0m");
 
-            String::from("Error")
+            content = format!(
+                "HTTP/1.1 404 OK\r\nContent-Length: {}\r\n\r\n{}",
+                0,
+                ""
+            );
         }
-    }
+    };
+    
+    return content;
 }
 
 fn get_image_content(file_name: String) -> (String, Vec<u8>) {

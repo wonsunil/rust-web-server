@@ -32,6 +32,23 @@ fn main() {
 
     logger.yellow().log(&format!("Server is Established at port: {}", PORT));
 
+    let mut test: HashMap<&str, String> = HashMap::new();
+    let mut t_session: HashMap<&str, String> = HashMap::new();
+
+    t_session.insert("as", "asd".into());
+    t_session.insert("sa", "dsa".into());
+
+    test.insert("test", "test".into());
+    test.insert("session", util::json::stringify(t_session));
+
+    let s = util::json::stringify(test.clone());
+    let p = util::json::parse(&s);
+
+    println!("{:?}", test);
+    println!("{:?}", s);
+    println!("{:?}", p);
+    println!("{:?}", p.get("session"));
+
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
         let mut buffer = [0; 5120];
