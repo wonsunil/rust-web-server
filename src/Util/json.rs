@@ -86,7 +86,7 @@ where
 
         json_string.push_str(r#"{"#);
 
-        if contains(datas, "session") {
+        if contains(&datas, "session") {
             println!("Http Response");
         };
 
@@ -95,17 +95,13 @@ where
                 break;
             };
 
-            if key.to_string() == "session" {
-                
-            } else {
-                json_string.push_str(r#"""#);
-                json_string += &key.into();
-                json_string.push_str(r#"""#);
-                json_string.push_str(":");
-                json_string.push_str(r#"""#);
-                json_string.push_str(&value.to_string());
-                json_string.push_str(r#"""#);
-            }
+            json_string.push_str(r#"""#);
+            json_string += &key.into();
+            json_string.push_str(r#"""#);
+            json_string.push_str(":");
+            json_string.push_str(r#"""#);
+            json_string.push_str(&value.to_string());
+            json_string.push_str(r#"""#);
             
             counter += 1;
             

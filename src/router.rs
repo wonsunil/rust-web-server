@@ -130,9 +130,8 @@ impl Router{
         }
     }
 
-    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str, session: &mut Session, session_storage: &mut SessionStorage) -> Option<Session> {
+    pub fn call_router(&mut self, mut stream: TcpStream, request_type: String, method: Method, url: &str, data: &str, session: &mut Session, session_storage: &mut SessionStorage) {
         let (mut logger, mut error_logger) = logger::new();
-        let mut return_value = Option::None;
         let response = self.find_router(&method, url);
 
         match response{
@@ -158,22 +157,14 @@ impl Router{
                         content.1.len(),
                     );
 
-                    return_value = None;
-
                     stream.write(formatted_content.as_bytes()).unwrap();
                     stream.write_all(&content.1).unwrap();
                 }else {
-                    let mut t = json::parse(&data.get_data());
-                    t.insert_map("session".into(), session.get_data());
+                    let t = json::parse(&data.get_data());
+                    // t.insert_map("session".into(), session.get_data());
 
                     let contents = handler(HttpRequest::new_with_data(json::stringify(t.get_data())));
                     let parse_content = json::parse(&contents);
-
-                    // session.set_data(json::parse(&parse_content.get("session")).get_data());
-
-                    println!("{:?}", json::parse(&parse_content.get("session")));
-
-                    return_value = Some(session.clone());
 
                     logger.log(&format!("   Response {:?}", parse_content));
 
@@ -207,7 +198,7 @@ impl Router{
                             if content == "Error" {
                                 logger.log("]");
 
-                                return None;
+                                return;
                             };
 
                             stream.write(content.as_bytes()).unwrap();
@@ -219,8 +210,6 @@ impl Router{
                             error_logger.log("Invalid css address");
                         }
                     };
-
-                    return None;
                 };
 
                 if js_request_regex.is_match(url) {
@@ -235,7 +224,7 @@ impl Router{
                             if content == "Error" {
                                 logger.log("]");
 
-                                return None;
+                                return;
                             };
 
                             stream.write(content.as_bytes()).unwrap();
@@ -247,16 +236,12 @@ impl Router{
                             error_logger.log("Invalid js address");
                         }
                     };
-
-                    return None;
                 };
 
                 logger.log("   \x1b[33mError:\x1b[0m \x1b[31mNot Mapped Request Url\x1b[0m");
                 logger.log("]");
             }
         }
-
-        return_value
     }
 
     pub fn ignore(&mut self, url: &str) {

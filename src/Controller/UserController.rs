@@ -98,15 +98,15 @@ pub fn new() -> Router {
             });
         };
 
-        let mut map = map!{
+        let map = map!{
             "status" => "200",
             "message" => "로그인에 성공했습니다."
         };
 
-        let session_data = session.get_data();
-        let json_session_data = &json::stringify(session_data);
+        // let session_data = session.get_data();
+        // let json_session_data = &json::stringify(session_data);
         
-        map.insert("session", json_session_data);
+        // map.insert("session", json_session_data);
 
         logger.log("   ]");
 

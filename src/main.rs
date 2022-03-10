@@ -121,18 +121,7 @@ fn handle_connection(stream: TcpStream, route: &mut Router, request_type: String
                         return;
                     };
 
-                    let result = route.call_router(stream, request_type, method, url, data, session, session_storage);
-
-                    match result {
-                        Some(mut session) => {
-                            session_storage.set_session(&mut session);
-
-                            // println!("Session get data{:?}", session.get_data());
-                        },
-                        None => {
-                            println!("Default Request");
-                        }
-                    };
+                    route.call_router(stream, request_type, method, url, data, session, session_storage);
                 },
                 None => {
                     logger.log("   \x1b[33mError:\x1b[0m \x1b[31mRequest url is not allowed\x1b[0m");

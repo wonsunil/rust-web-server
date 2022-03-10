@@ -12,10 +12,6 @@ $loginButton.addEventListener("click", () => {
     })
     .then(req => req.json())
     .then(res => {
-        console.log(res);
-
-        console.log(res.status, document.cookie);
-
         if(res.status === "200" && document.cookie.length === 0 && document.cookie.split("\n")[0].length === 0) {
             document.cookie = res.cookie;
         };
