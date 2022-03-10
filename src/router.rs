@@ -210,6 +210,8 @@ impl Router{
                             error_logger.log("Invalid css address");
                         }
                     };
+
+                    return;
                 };
 
                 if js_request_regex.is_match(url) {
@@ -236,6 +238,8 @@ impl Router{
                             error_logger.log("Invalid js address");
                         }
                     };
+
+                    return;
                 };
 
                 logger.log("   \x1b[33mError:\x1b[0m \x1b[31mNot Mapped Request Url\x1b[0m");
